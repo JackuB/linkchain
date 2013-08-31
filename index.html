@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>linkchain</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+    <script>
+      WebFont.load({
+        google: {
+          families: ["Open Sans:300,400,600,700,800","Inconsolata:400,700"]
+        }
+      });
+    </script>
+  </head><body data-bind="css: {'sidebarVisible' : $root.showSidebar() != ''}">
+  <div class="movable-wrap">
+    <div class="w-clearfix fixed-top">
+      <img class="user-pic" src="images/jedenbod.jpg" width="35" alt="jedenbod.jpg">
+      <h1 data-bind="text: curUser().name + ' > ' + curBoard().boardName">Test boardname</h1><a class="addbutton" data-bind="click: $root.showAddLinkForm, css: {'active' : $root.showSidebar() == 'addLink'}" href="javascript:;">+</a>
+    </div>
+    <div class="content-wrap">
+      <div class="box" data-bind="visible: $root.curBoard().boardName == null">
+        <p>Looks like you are not part of any group...</p>
+        <h2>Create new group</h2>
+      </div>
+      <div class="box" data-bind="visible: $root.curBoard().boardName != null && $root.curBoard().links == null">
+        <p></p>
+        <h2>Add new link</h2>
+      </div>
+      <div class="box" data-bind="visible: $root.curBoard().boardName != null && $root.curBoard().users.lenght != 1">
+        <p></p>
+        <h2>Invite some people</h2>
+      </div>
+
+      <div class="w-clearfix items-wrap" data-bind="foreach: $root.boardLinks">
+        <div class="item">
+          <h3 class="item-heading" data-bind="text: title"></h3>
+          <!--<p class="item-text"></p>-->
+          <div class="w-clearfix" data-bind="foreach: tags">
+            <a class="item-tag" href="javascript:;" data-bind="text: $data"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <h4>Add link</h4>
+    <form action="/" data-bind="submit: $root.saveLink">
+      <input type="text" value="" data-bind="value: $root.linkToAdd, valueUpdate: 'afterkeydown'" placeholder="http://github.com" />
+      <textarea data-bind="value: $root.linkTitle, visible: $root.linkTitle() != '', valueUpdate: 'afterkeydown'"></textarea>
+      <textarea data-bind="value: $root.tagsToAdd, visible: $root.linkTitle() != '', valueUpdate: 'afterkeydown'"></textarea>
+      <input type="submit" data-bind="visible: $root.linkTitle() != ''" value="Add" />
+    </form>
+  </div>
+
+  <script type='text/javascript' src='https://cdn.firebase.com/v0/firebase.js'></script>
+  <script src="js/app-ck.js"></script>
+
+</body>
+</html>
