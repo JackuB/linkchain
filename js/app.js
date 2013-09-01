@@ -1,5 +1,5 @@
 var firebaseRef = new Firebase("https://linkchain.firebaseio.com/"); //reference na hlavni firebase objekt
-var firebaseRefLinks = new Firebase("https://linkchain.firebaseio.com/boards/0/links"); // reference na firebase objekt s odkazy
+var firebaseRefLinks = new Firebase("https://linkchain.firebaseio.com/board/links"); // reference na firebase objekt s odkazy
 var itemsWrap = $(".items-wrap");
 itemsWrap.packery({isLayoutInstant: true}); // inicializace packery http://packery.metafizzy.co
 setInterval(function() { // packery není příliš náročný (~3ms) a spouštění v intervalu je jednodušší, než ho nárazově spouštět pro X položek, ale pro větší kolekce by bylo potřeba udělat inicializaci packery chytřeji -> např. rozšířením ko.observableArray.push() (který používáme pro odkazy)
@@ -15,7 +15,7 @@ var auth = new FirebaseSimpleLogin(firebaseRef, function(error, user) {
 });
 $(".overlay img").click(function() {
 	auth.login('facebook');
-})
+});
 function linkchain(userId,displayName) { // začátek knockout.js
 	var self = this; // reference
 	self.userDisplayName = ko.observable(displayName);
@@ -26,6 +26,7 @@ function linkchain(userId,displayName) { // začátek knockout.js
 	}
     self.items = KnockoutFire.observable( // KnockoutFire synchronizuje data mezi firebase a ko.observableArray
         firebaseRefLinks, {
+        	".reverse": true,
             "$links": { // $ označuje, který objekt chceme zpřístupnit
                 "title": true, // definujeme, které části chceme přístupné
                 "url": true,
@@ -34,7 +35,7 @@ function linkchain(userId,displayName) { // začátek knockout.js
             },
             ".newItem": { // newItem handluje přidávání nových částí - s definovaným callbackem
                 ".priority": function() {return Date.now()}, // kvůli řazení seznamů ve firebase
-                ".on_success": function(){ self.linkTitle(""); self.linkToAdd(""); self.tagsToAdd(""); self.showSidebar(""); itemsWrap.packery(); }, // při odeslání výsledků vyprázdníme všechna pole a skryjeme sidebar
+                ".on_success": function(){ self.linkTitle(""); self.linkToAdd(""); self.tagsToAdd(""); self.showSidebar(false); itemsWrap.packery(); }, // při odeslání výsledků vyprázdníme všechna pole a skryjeme sidebar
                 "title": function() {return self.linkTitle()},
                 "url": function() {return self.linkToAdd()},
                 "author": function() {return self.userId()}, // jako hodnotu nastavíme aktuálního uživatele
@@ -82,12 +83,8 @@ function linkchain(userId,displayName) { // začátek knockout.js
 			}
 		}
 	}).extend({ throttle: 500 });
-	self.showSidebar = ko.observable("");
+	self.showSidebar = ko.observable(false);
 	self.showAddLinkForm = function() {
-		if(self.showSidebar() == "addLink") {
-			self.showSidebar("");
-		} else {
-			self.showSidebar("addLink");
-		}
+		self.showSidebar(!self.showSidebar());
 	}
 }

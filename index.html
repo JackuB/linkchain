@@ -15,7 +15,7 @@
       });
     </script>
   </head>
-  <body data-bind="css: {'sidebarVisible' : showSidebar() != ''}">
+  <body data-bind="css: {'sidebarVisible' : showSidebar()}">
 
   <div class="overlay">
     linkcha.in<br />
@@ -27,15 +27,17 @@
     <div class="w-clearfix fixed-top">
       <img class="user-pic" width="35" data-bind="attr: {'src':'//graph.facebook.com/' + userId() + '/picture'}">
       <h1 data-bind="text: userDisplayName"></h1>
-      <a class="addbutton" data-bind="click: showAddLinkForm, css: {'active' : showSidebar() == 'addLink'}" href="javascript:;">+</a>
+      <a class="addbutton" data-bind="click: showAddLinkForm, css: {'active' : showSidebar()}" href="javascript:;">+</a>
       <input class="searchInput" placeholder="Search" type="text" data-bind="value: searchInput, valueUpdate: 'afterkeydown'" />
     </div>
     <div class="content-wrap">
       <div class="w-clearfix items-wrap" data-bind="foreach: items">
         <div class="item" data-bind="visible: $parent.isVisible($data)">
-          <h3 class="item-heading" data-bind="text: title"></h3>
+          <h3 class="item-heading">
+            <a href="javascript:;" data-bind="text: title, attr: {'href':url}"></a>
+            <a data-bind="click: $parent.removeItem" class="item-remove" href="javascript:;">delete<span>Delete link?<br />Are you sure?!</span></a>
+          </h3>
           <p class="item-text" data-bind="text: url"></p>
-          <a data-bind="click: $parent.removeItem" style="color:red;" href="#">[x]</a>
           <div class="w-clearfix" data-bind="foreach: tags">
             <a class="item-tag" href="javascript:;" data-bind="text: $data, click: $root.searchThis"></a>
           </div>
@@ -48,9 +50,12 @@
     <h4>Add link</h4>
     <!-- ko with: items.newItem -->
     <form data-bind="submit: create">
-        <input type="text" data-bind="value: $root.linkToAdd, valueUpdate: 'afterkeydown'" />
-        <input type="text" data-bind="value: $root.linkTitle, valueUpdate: 'afterkeydown'" />
-        <input type="text" data-bind="value: $root.tagsToAdd, valueUpdate: 'afterkeydown'" />
+        Link to add<br />
+        <input type="text" placeholder="http://github.com" data-bind="value: $root.linkToAdd, valueUpdate: 'afterkeydown'" />
+        Link title<br />
+        <input type="text" placeholder="GitHub · Build software better, together." data-bind="value: $root.linkTitle, valueUpdate: 'afterkeydown'" />
+        Tags (space/comma separated)<br />
+        <input type="text" placeholder="git, development, website" data-bind="value: $root.tagsToAdd, valueUpdate: 'afterkeydown'" />
         <button type="submit">Add new link</button>
     </form>
     <!-- /ko -->
