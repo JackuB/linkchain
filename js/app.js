@@ -1,76 +1,93 @@
-(function() {
-	var firebaseRef = new Firebase('https://linkchain.firebaseio.com/');
-	var itemsWrap = $(".items-wrap");
-	function linkchain() {
-		var self = this;
-		self.curUser = ko.observable("");
-		self.curBoard = ko.observable({boardName: null, users: [], links: []});
-		self.boardLinks = ko.observableArray([]);
-		itemsWrap.packery({
-			itemSelector: '.item',
-			gutter: 15
-		});
-		firebaseRef.child("testUsers").child(0).on('value', function(currentUser) {
-	  		self.curUser(currentUser.val());
-	  		var defaultBoard = self.curUser().boards[0];
-	  		if(typeof defaultBoard != "undefined" && isNumber(defaultBoard)) {
-	  			self.loadBoard(defaultBoard);
-	  		}
-		});
-		self.showSidebar = ko.observable("");
-		self.showAddLinkForm = function() {
-			if(self.showSidebar() == "addLink") {
-				self.showSidebar("");
+var firebaseRef = new Firebase("https://linkchain.firebaseio.com/"); //reference na hlavni firebase objekt
+var firebaseRefLinks = new Firebase("https://linkchain.firebaseio.com/boards/0/links"); // reference na firebase objekt s odkazy
+var itemsWrap = $(".items-wrap");
+itemsWrap.packery({isLayoutInstant: true}); // inicializace packery http://packery.metafizzy.co
+setInterval(function() { // packery není příliš náročný (~3ms) a spouštění v intervalu je jednodušší, než ho nárazově spouštět pro X položek, ale pro větší kolekce by bylo potřeba udělat inicializaci packery chytřeji -> např. rozšířením ko.observableArray.push() (který používáme pro odkazy)
+	itemsWrap.packery();
+},1500);
+var auth = new FirebaseSimpleLogin(firebaseRef, function(error, user) {
+	if (error) {
+		console.log(error);
+	} else if (user) {
+		$(".overlay").fadeOut();
+		var app = ko.applyBindings(new linkchain(user.id,user.displayName)); // spuštění knockout.js
+	}
+});
+$(".overlay img").click(function() {
+	auth.login('facebook');
+})
+function linkchain(userId,displayName) { // začátek knockout.js
+	var self = this; // reference
+	self.userDisplayName = ko.observable(displayName);
+	self.userId = ko.observable(userId);
+	self.searchInput = ko.observable("");
+	self.searchThis = function(string) {
+		self.searchInput(string);
+	}
+    self.items = KnockoutFire.observable( // KnockoutFire synchronizuje data mezi firebase a ko.observableArray
+        firebaseRefLinks, {
+            "$links": { // $ označuje, který objekt chceme zpřístupnit
+                "title": true, // definujeme, které části chceme přístupné
+                "url": true,
+                "tags": true,
+                "author": true
+            },
+            ".newItem": { // newItem handluje přidávání nových částí - s definovaným callbackem
+                ".priority": function() {return Date.now()}, // kvůli řazení seznamů ve firebase
+                ".on_success": function(){ self.linkTitle(""); self.linkToAdd(""); self.tagsToAdd(""); self.showSidebar(""); itemsWrap.packery(); }, // při odeslání výsledků vyprázdníme všechna pole a skryjeme sidebar
+                "title": function() {return self.linkTitle()},
+                "url": function() {return self.linkToAdd()},
+                "author": function() {return self.userId()}, // jako hodnotu nastavíme aktuálního uživatele
+                "tags": function() {return self.tagsToAdd().split(/[ ,]+/)} // parsuje tagy do pole
+            }
+        }
+    );
+    self.removeItem = function(item) { // odstranění ze seznamu
+        firebaseRefLinks.child(item.firebase.name()).remove();
+    }
+	firebaseRefLinks.on("value", function() { // zapíšeme se k eventu, kdy se někdo přidá child element do objektu s odkazy
+		itemsWrap.packery("reloadItems").packery(); // reloadItems přidá nové položky do kolekce (nebo odebere smazané) a spustíme refresh
+	});
+	self.isVisible = function(item) {
+		itemsWrap.packery();
+		if(self.searchInput() == "") {
+			return true
+		} else {
+			if(item.title().toLowerCase().search(self.searchInput().toLowerCase()) != -1 || item.url().toLowerCase().search(self.searchInput().toLowerCase()) != -1 || searchStringInArray(self.searchInput(), item.tags()) != -1) { // prohledáme title, url a pole tagů
+				return true
 			} else {
-				self.showSidebar("addLink");
+				return false
 			}
-		}
-		self.linkToAdd = ko.observable("");
-		self.linkTitle = ko.observable("");
-		self.tagsToAdd = ko.observable("");
-		self.getLinkMeta = ko.computed(function() {
-			if(self.linkToAdd().length > 4) {
-				if(isUrl(self.linkToAdd())) {
-					$.get("http://radar.runway7.net",{url: self.linkToAdd()}, function(response) {
-						self.linkTitle(response.title);
-					});
-				}
-			}
-		}).extend({ throttle: 500 });
-		self.saveLink = function() {
-			self.tagsToAdd(self.tagsToAdd().split(/[ ,]+/));
-			firebaseRef.child("boards").child(self.curUser().boards[0]).child("links").push({
-				title: self.linkTitle(),
-				url: self.linkToAdd(),
-				tags: self.tagsToAdd(),
-				user: self.curUser().name
-			}, function() {
-				self.showSidebar("");
-				self.linkToAdd = ko.observable("");
-				self.linkTitle = ko.observable("");
-				self.tagsToAdd = ko.observable("");
-			});
-		}
-		self.loadBoard = function(id) {
-  			firebaseRef.child("boards").child(id).on("value",function(snapshot) {
-  				if(snapshot.val() === null) {
-  					throw "Board " + id + " not loaded";
-  				} else {
-  					self.curBoard(snapshot.val());
-  					var packeryTimeout;
-  					firebaseRef.child("boards").child(id).child("links").on("child_added", function(link) {
-  						var isThere = $.grep(self.boardLinks(), function(e){ return e.url == link.val().url; });
-  						if(isThere[0] == null) {
-  							self.boardLinks.push(link.val());
-  							clearTimeout(packeryTimeout);
-		  					packeryTimeout = setTimeout(function() {
-								itemsWrap.packery("reloadItems").packery();
-							},350);
-  						}
-  					});
-  				}
-  			});
 		}
 	}
-	var app = ko.applyBindings(new linkchain());
-})();
+	self.linkToAdd = ko.observable("");
+	self.linkTitle = ko.observable("");
+	self.tagsToAdd = ko.observable("");
+	self.loadTitle = function(url) {
+		var secondLoad = false;
+		$.get("http://radar.runway7.net",{url: self.linkToAdd()}, function(response) {
+			if(typeof response.title == "undefined" && !secondLoad) {
+				secondLoad = true;
+				self.loadTitle(url);
+			} else {
+				secondLoad = false;
+				self.linkTitle(response.title);
+			}
+		});
+	}
+	self.getLinkMeta = ko.computed(function() {
+		if(self.linkToAdd().length > 4) {
+			if(isUrl(self.linkToAdd())) {
+				self.loadTitle(self.linkToAdd());
+			}
+		}
+	}).extend({ throttle: 500 });
+	self.showSidebar = ko.observable("");
+	self.showAddLinkForm = function() {
+		if(self.showSidebar() == "addLink") {
+			self.showSidebar("");
+		} else {
+			self.showSidebar("addLink");
+		}
+	}
+}

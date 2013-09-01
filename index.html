@@ -14,32 +14,30 @@
         }
       });
     </script>
-  </head><body data-bind="css: {'sidebarVisible' : $root.showSidebar() != ''}">
+  </head>
+  <body data-bind="css: {'sidebarVisible' : showSidebar() != ''}">
+
+  <div class="overlay">
+    linkcha.in<br />
+    No bullshit link sharing for groups<br />
+    <img src="images/fb-btn.png" />
+  </div>
+
   <div class="movable-wrap">
     <div class="w-clearfix fixed-top">
-      <img class="user-pic" src="images/jedenbod.jpg" width="35" alt="jedenbod.jpg">
-      <h1 data-bind="text: curUser().name + ' > ' + curBoard().boardName">Test boardname</h1><a class="addbutton" data-bind="click: $root.showAddLinkForm, css: {'active' : $root.showSidebar() == 'addLink'}" href="javascript:;">+</a>
+      <img class="user-pic" width="35" data-bind="attr: {'src':'//graph.facebook.com/' + userId() + '/picture'}">
+      <h1 data-bind="text: userDisplayName"></h1>
+      <a class="addbutton" data-bind="click: showAddLinkForm, css: {'active' : showSidebar() == 'addLink'}" href="javascript:;">+</a>
+      <input class="searchInput" placeholder="Search" type="text" data-bind="value: searchInput, valueUpdate: 'afterkeydown'" />
     </div>
     <div class="content-wrap">
-      <div class="box" data-bind="visible: $root.curBoard().boardName == null">
-        <p>Looks like you are not part of any group...</p>
-        <h2>Create new group</h2>
-      </div>
-      <div class="box" data-bind="visible: $root.curBoard().boardName != null && $root.curBoard().links == null">
-        <p></p>
-        <h2>Add new link</h2>
-      </div>
-      <div class="box" data-bind="visible: $root.curBoard().boardName != null && $root.curBoard().users.lenght != 1">
-        <p></p>
-        <h2>Invite some people</h2>
-      </div>
-
-      <div class="w-clearfix items-wrap" data-bind="foreach: $root.boardLinks">
-        <div class="item">
+      <div class="w-clearfix items-wrap" data-bind="foreach: items">
+        <div class="item" data-bind="visible: $parent.isVisible($data)">
           <h3 class="item-heading" data-bind="text: title"></h3>
-          <!--<p class="item-text"></p>-->
+          <p class="item-text" data-bind="text: url"></p>
+          <a data-bind="click: $parent.removeItem" style="color:red;" href="#">[x]</a>
           <div class="w-clearfix" data-bind="foreach: tags">
-            <a class="item-tag" href="javascript:;" data-bind="text: $data"></a>
+            <a class="item-tag" href="javascript:;" data-bind="text: $data, click: $root.searchThis"></a>
           </div>
         </div>
       </div>
@@ -48,15 +46,18 @@
 
   <div class="sidebar">
     <h4>Add link</h4>
-    <form action="/" data-bind="submit: $root.saveLink">
-      <input type="text" value="" data-bind="value: $root.linkToAdd, valueUpdate: 'afterkeydown'" placeholder="http://github.com" />
-      <textarea data-bind="value: $root.linkTitle, visible: $root.linkTitle() != '', valueUpdate: 'afterkeydown'"></textarea>
-      <textarea data-bind="value: $root.tagsToAdd, visible: $root.linkTitle() != '', valueUpdate: 'afterkeydown'"></textarea>
-      <input type="submit" data-bind="visible: $root.linkTitle() != ''" value="Add" />
+    <!-- ko with: items.newItem -->
+    <form data-bind="submit: create">
+        <input type="text" data-bind="value: $root.linkToAdd, valueUpdate: 'afterkeydown'" />
+        <input type="text" data-bind="value: $root.linkTitle, valueUpdate: 'afterkeydown'" />
+        <input type="text" data-bind="value: $root.tagsToAdd, valueUpdate: 'afterkeydown'" />
+        <button type="submit">Add new link</button>
     </form>
+    <!-- /ko -->
   </div>
 
   <script type='text/javascript' src='https://cdn.firebase.com/v0/firebase.js'></script>
+  <script type='text/javascript' src='https://cdn.firebase.com/v0/firebase-simple-login.js'></script>
   <script src="js/app-ck.js"></script>
 
 </body>
