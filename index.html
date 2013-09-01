@@ -20,12 +20,12 @@
   <div class="overlay">
     linkcha.in<br />
     No bullshit link sharing for groups<br />
-    <img src="images/fb-btn.png" />
+    <img onclick="auth.login('facebook')" src="images/fb-btn.png" />
   </div>
 
   <div class="movable-wrap">
     <div class="w-clearfix fixed-top">
-      <img class="user-pic" width="35" data-bind="attr: {'src':'//graph.facebook.com/' + userId() + '/picture'}">
+      <img class="user-pic" width="35" data-bind="attr: {'src':'//graph.facebook.com/' + userId() + '/picture'}" />
       <h1 data-bind="text: userDisplayName"></h1>
       <a class="addbutton" data-bind="click: showAddLinkForm, css: {'active' : showSidebar()}" href="javascript:;">+</a>
       <input class="searchInput" placeholder="Search" type="text" data-bind="value: searchInput, valueUpdate: 'afterkeydown'" />
@@ -35,12 +35,13 @@
         <div class="item" data-bind="visible: $parent.isVisible($data)">
           <h3 class="item-heading">
             <a href="javascript:;" data-bind="text: title, attr: {'href':url}"></a>
-            <a data-bind="click: $parent.removeItem" class="item-remove" href="javascript:;">delete<span>Delete link?<br />Are you sure?!</span></a>
           </h3>
           <p class="item-text" data-bind="text: url"></p>
           <div class="w-clearfix" data-bind="foreach: tags">
             <a class="item-tag" href="javascript:;" data-bind="text: $data, click: $root.searchThis"></a>
           </div>
+          <img width="16" data-bind="attr: {'src':'//graph.facebook.com/' + author() + '/picture'}" />
+          <a data-bind="click: $parent.removeItem, visible: author() == $root.userId()" class="item-remove" href="javascript:;">delete<span>Delete link?<br />Are you sure?!</span></a>
         </div>
       </div>
     </div>

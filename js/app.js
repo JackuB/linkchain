@@ -5,20 +5,15 @@ itemsWrap.packery({isLayoutInstant: true}); // inicializace packery http://packe
 setInterval(function() { // packery není příliš náročný (~3ms) a spouštění v intervalu je jednodušší, než ho nárazově spouštět pro X položek, ale pro větší kolekce by bylo potřeba udělat inicializaci packery chytřeji -> např. rozšířením ko.observableArray.push() (který používáme pro odkazy)
 	itemsWrap.packery();
 },1500);
-var auth = new FirebaseSimpleLogin(firebaseRef, function(error, user) {
-	if (error) {
-		console.log(error);
-	} else if (user) {
+var auth = new FirebaseSimpleLogin(firebaseRef, function(error, user) { // FirebaseSimpleLogin simple login se postará o autentifikaci uživatelů
+	if (user) {
 		$(".overlay").fadeOut();
-		var app = ko.applyBindings(new linkchain(user.id,user.displayName)); // spuštění knockout.js
+		var app = ko.applyBindings(new linkchain(user.id,user.displayName)); // spuštění knockout.js teprve po přihlášení
 	}
-});
-$(".overlay img").click(function() {
-	auth.login('facebook');
 });
 function linkchain(userId,displayName) { // začátek knockout.js
 	var self = this; // reference
-	self.userDisplayName = ko.observable(displayName);
+	self.userDisplayName = ko.observable(displayName); // naplníme informacemi, které jsme získali při loginu
 	self.userId = ko.observable(userId);
 	self.searchInput = ko.observable("");
 	self.searchThis = function(string) {
@@ -61,9 +56,16 @@ function linkchain(userId,displayName) { // začátek knockout.js
 			}
 		}
 	}
-	self.linkToAdd = ko.observable("");
+	self.linkToAdd = ko.observable(""); // vytvoříme si 3 observables, které použijeme při tvoření nového odkazu
 	self.linkTitle = ko.observable("");
 	self.tagsToAdd = ko.observable("");
+	self.getLinkMeta = ko.computed(function() {
+		if(self.linkToAdd().length > 4) {
+			if(isUrl(self.linkToAdd())) {
+				self.loadTitle(self.linkToAdd());
+			}
+		}
+	}).extend({ throttle: 500 }); // počkáme 500ms na to, jestli uživatel už dopsal, ať ko.computed nespouštíme příliš často
 	self.loadTitle = function(url) {
 		var secondLoad = false;
 		$.get("http://radar.runway7.net",{url: self.linkToAdd()}, function(response) {
@@ -76,13 +78,6 @@ function linkchain(userId,displayName) { // začátek knockout.js
 			}
 		});
 	}
-	self.getLinkMeta = ko.computed(function() {
-		if(self.linkToAdd().length > 4) {
-			if(isUrl(self.linkToAdd())) {
-				self.loadTitle(self.linkToAdd());
-			}
-		}
-	}).extend({ throttle: 500 });
 	self.showSidebar = ko.observable(false);
 	self.showAddLinkForm = function() {
 		self.showSidebar(!self.showSidebar());
