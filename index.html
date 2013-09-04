@@ -44,7 +44,7 @@
           <a data-bind="click: $parent.removeItem, visible: author() == $root.userId()" class="item-remove" href="javascript:;">delete<span>Delete link?<br />Are you sure?!</span></a>
         </div>
       </div>
-      <div data-bind="foreach: boardUsers">
+      <div class="bottomFixed" data-bind="foreach: boardUsers">
         <img class="user-pic" width="35" data-bind="attr: {'src':'//graph.facebook.com/' + $data + '/picture'}, click: $root.searchThis" />
       </div>
     </div>

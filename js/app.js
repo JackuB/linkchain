@@ -1,7 +1,11 @@
 var firebaseRef = new Firebase("https://linkchain.firebaseio.com/"); //reference na hlavni firebase objekt
 var firebaseRefLinks = new Firebase("https://linkchain.firebaseio.com/board/links"); // reference na firebase objekt s odkazy
+
 var pckry = new Packery(document.querySelector('#items-wrap'),{isLayoutInstant: true});  // inicializace packery http://packery.metafizzy.co
-setInterval(function() {pckry.layout();},1500); // packery není příliš náročný (~3ms) a spouštění v intervalu je jednodušší, než ho nárazově spouštět pro X položek, ale pro větší kolekce by bylo potřeba udělat inicializaci packery chytřeji -> např. rozšířením ko.observableArray.push() (který používáme pro odkazy)
+setInterval(function() {
+	pckry.layout();}
+,1500); // packery není příliš náročný (~3ms) a spouštění v intervalu je jednodušší, než ho nárazově spouštět pro X položek, ale pro větší kolekce by bylo potřeba udělat inicializaci packery chytřeji -> např. rozšířením ko.observableArray.push() (který používáme pro odkazy)
+
 var auth = new FirebaseSimpleLogin(firebaseRef, function(error, user) { // FirebaseSimpleLogin simple login se postará o autentifikaci uživatelů
 	if (user) {
 		document.querySelector('.overlay').style.opacity="0"; // změníme opacitu - css3 transition se postará o přechod
@@ -9,6 +13,7 @@ var auth = new FirebaseSimpleLogin(firebaseRef, function(error, user) { // Fireb
 		var app = ko.applyBindings(new linkchain(user.id,user.displayName)); // spuštění knockout.js teprve po přihlášení
 	}
 });
+
 function linkchain(userId,displayName) { // začátek knockout.js
 	var self = this; // reference
 	self.userDisplayName = ko.observable(displayName); // naplníme informacemi, které jsme získali při loginu
